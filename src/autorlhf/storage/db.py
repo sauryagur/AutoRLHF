@@ -389,8 +389,8 @@ class RunStore:
     ) -> list[RunRecord]:
         sql = "SELECT * FROM runs"
         params: list[Any] = []
-        if statuses is not None:
-            values = [RunStatus(s).value for s in statuses]
+        values = [RunStatus(s).value for s in statuses] if statuses else []
+        if values:
             sql += f" WHERE status IN ({','.join('?' * len(values))})"
             params.extend(values)
         sql += " ORDER BY created_at DESC, rowid DESC LIMIT ?"
@@ -967,12 +967,13 @@ class RunStore:
             "checkpoints": len(self.list_checkpoints(run_id, complete_only=True)),
             "last_checkpoint": self.last_complete_checkpoint(run_id),
             "metrics": {
-                name: (self.metrics(run_id, name)[-1] if self.metrics(run_id, name) else None)
+                name: (series[-1] if (series := self.metrics(run_id, name)) else None)
                 for name in self.metric_names(run_id)
             },
             "artifacts": self.list_artifacts(run_id),
             "transitions": self.transitions(run_id)[-20:],
         }
+
 
     # -- helpers ----------------------------------------------------------- #
 
