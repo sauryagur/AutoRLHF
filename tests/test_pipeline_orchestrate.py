@@ -153,7 +153,7 @@ class StubJev:
         self.compare_calls = 0
         self.rank_calls = 0
 
-    def score_response(self, *, prompt_id, candidate, prompt, context=()):
+    def score_response(self, *, prompt_id, candidate, prompt, context=(), pass_index=0):
         self.score_calls += 1
         if candidate.candidate_id.startswith("base:"):
             overall = self.base_overall

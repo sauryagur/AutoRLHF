@@ -189,7 +189,13 @@ def generate_eval_response(
 
 
 def _judge_once(
-    jev: JevEvaluator, prompt: EvalPrompt, variant: str, text: str, model_id: str
+    jev: JevEvaluator,
+    prompt: EvalPrompt,
+    variant: str,
+    text: str,
+    model_id: str,
+    *,
+    pass_index: int = 0,
 ) -> Judgement:
     candidate = CandidateResponse(
         candidate_id=eval_candidate_id(variant, prompt.prompt_id),
@@ -203,6 +209,7 @@ def _judge_once(
         candidate=candidate,
         prompt=prompt.text,
         context=prompt.context,
+        pass_index=pass_index,
     )
 
 
@@ -354,7 +361,16 @@ def evaluate_model(
                         verbose_only=True,
                     )
                 started = time.monotonic()
-                passes.append(_judge_once(jev, prompt, variant, response.text, handle.model_id))
+                passes.append(
+                    _judge_once(
+                        jev,
+                        prompt,
+                        variant,
+                        response.text,
+                        handle.model_id,
+                        pass_index=pass_index,
+                    )
+                )
                 result = passes[-1]
                 if bus is not None:
                     bus.emit(

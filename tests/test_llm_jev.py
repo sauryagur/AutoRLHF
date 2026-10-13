@@ -176,6 +176,19 @@ def test_score_caches_second_identical_call(store, rubric):
     assert second.cached is True
 
 
+def test_score_repeat_passes_are_not_cache_hits_of_each_other(store, rubric):
+    """judge_repeats only averages noise if each pass really reaches the judge."""
+
+    decisions = FakeDecisions([score_response_for(rubric)])
+    cache = ResponseCache(store)
+    jev = make_evaluator(decisions, rubric=rubric, cache=cache)
+    first = jev.score_response(prompt_id="p0001", candidate=candidate(), prompt="p", pass_index=0)
+    second = jev.score_response(prompt_id="p0001", candidate=candidate(), prompt="p", pass_index=1)
+    assert len(decisions.calls) == 2
+    assert decisions.calls[1]["state"]["pass"] == 1
+    assert first.judgement_id != second.judgement_id
+
+
 # --------------------------------------------------------------------------- #
 # choice: preference
 # --------------------------------------------------------------------------- #

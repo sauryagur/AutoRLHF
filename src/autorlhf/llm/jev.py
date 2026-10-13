@@ -172,8 +172,13 @@ class JevEvaluator:
         candidate: CandidateResponse,
         prompt: str,
         context: list[dict[str, str]] = (),
+        pass_index: int = 0,
     ) -> Judgement:
-        """Score one candidate response against every rubric criterion."""
+        """Score one candidate response against every rubric criterion.
+
+        ``pass_index`` separates repeated evaluation passes: without it every pass
+        is a cache hit on the first one and the average is a value with itself.
+        """
 
         questions = self.rubric.questions_for_judge()
         state: dict[str, Any] = {
@@ -185,19 +190,24 @@ class JevEvaluator:
             "context": list(context),
             "response": candidate.text,
         }
+        # Only a repeat pass carries it, so single-pass callers keep their exact
+        # cache key and judgement id.
+        if pass_index:
+            state["pass"] = pass_index
         budget = self._response_budget(state)
         fitted, truncated = self._fit_response(candidate.text, budget=budget)
         state["response"] = fitted
 
-        judgement_id = "j-" + content_hash(
-            {
-                "kind": "score",
-                "run_id": self.run_id,
-                "prompt_id": prompt_id,
-                "candidate_id": candidate.candidate_id,
-                "judge_model": self.judge_model,
-            }
-        )
+        id_parts: dict[str, Any] = {
+            "kind": "score",
+            "run_id": self.run_id,
+            "prompt_id": prompt_id,
+            "candidate_id": candidate.candidate_id,
+            "judge_model": self.judge_model,
+        }
+        if pass_index:
+            id_parts["pass"] = pass_index
+        judgement_id = "j-" + content_hash(id_parts)
         request = DecisionsRequest(
             model=self.judge_model,
             state=state,
