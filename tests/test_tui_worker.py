@@ -67,6 +67,18 @@ def test_worker_passes_a_resume_checkpoint_when_one_exists(app_paths, store, bus
     assert record["job"].resume_from == checkpoint
 
 
+def test_worker_honours_the_resume_flag_for_dataset_preparation(
+    app_paths, store, bus, run_config
+):
+    worker, record = build_worker(app_paths, store, bus, run_config, resume=True)
+    worker.run()
+    assert record["prepare_dataset_resume"] is True
+
+    worker, record = build_worker(app_paths, store, bus, run_config, resume=False)
+    worker.run()
+    assert record["prepare_dataset_resume"] is False
+
+
 def test_worker_emits_a_phase_event(app_paths, store, bus, run_config):
     worker, _record = build_worker(app_paths, store, bus, run_config)
     worker.run()

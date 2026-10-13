@@ -189,7 +189,7 @@ class PipelineWorker:
             self.runner = runner
 
             self.calls.append("prepare_dataset")
-            self.bundle = runner.prepare_dataset()
+            self.bundle = runner.prepare_dataset(resume=self.resume)
 
             self.calls.append("run_review")
             self.bundle = runner.run_review(self.bundle)

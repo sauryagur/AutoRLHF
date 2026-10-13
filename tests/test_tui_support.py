@@ -188,7 +188,8 @@ class StubRunner:
         self.record = record
         self.adapter_path: Any = None
 
-    def prepare_dataset(self) -> str:
+    def prepare_dataset(self, *, resume: bool = True) -> str:
+        self.record["prepare_dataset_resume"] = resume
         return "bundle"
 
     def run_review(self, bundle: Any) -> Any:
