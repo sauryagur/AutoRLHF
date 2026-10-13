@@ -122,6 +122,7 @@ class FakeOpenRouterClient:
         cache: Any = None,
         run_id: str = "",
         app_title: str = "autorlhf",
+        trace: Any = None,
     ) -> None:
         assert api_key, "the pipeline must hand the client a key"
         self.timeout_s = timeout_s
@@ -129,6 +130,7 @@ class FakeOpenRouterClient:
         self.max_concurrency = max_concurrency
         self.cache = cache
         self.run_id = run_id
+        self.trace = trace
         self.chat_calls = 0
         self.decide_calls = 0
         self._per_prompt: dict[str, int] = {}
