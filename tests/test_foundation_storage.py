@@ -53,6 +53,12 @@ def test_create_get_and_list_runs(store: RunStore, run_config: RunConfig) -> Non
     assert store.latest_run() is not None
 
 
+def test_empty_status_filter_means_no_filter(store: RunStore, run_config: RunConfig) -> None:
+    record = store.create_run(run_config)
+
+    assert record.id in {r.id for r in store.list_runs(statuses=[])}
+
+
 def test_illegal_transition_is_rejected_and_legal_one_recorded(
     store: RunStore, run_config: RunConfig
 ) -> None:
