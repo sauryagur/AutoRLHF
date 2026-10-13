@@ -474,13 +474,14 @@ def compute_counters(
             counters["judgements_ok"] += 1
         else:
             counters["judgements_failed"] += 1
+    splits_by_prompt = {p.prompt_id: p.split for p in prompts}
     for split in SplitName:
         counters[f"split_{split.value}"] = sum(1 for p in prompts if p.split == split.value)
         counters[f"candidates_{split.value}"] = sum(
             1
             for c in candidates
             if c.status is not SampleStatus.FAILED
-            and next((p.split for p in prompts if p.prompt_id == c.prompt_id), "") == split.value
+            and splits_by_prompt.get(c.prompt_id, "") == split.value
         )
     return counters
 
