@@ -82,7 +82,9 @@ class JevEvaluator:
         judge_model: str,
         cache: ResponseCache | None = None,
         run_id: str = "",
-        max_retries: int = 3,
+        # The client already retries with backoff and classifies retryable vs
+        # credential errors; a second loop here would multiply the two.
+        max_retries: int = 0,
     ) -> None:
         self.client = client
         self.rubric = rubric
