@@ -112,9 +112,7 @@ run; the judge may only _rank_ the surviving presets, never invent hyperparamete
 Runs are resumable from their last complete checkpoint — resuming reloads the saved
 `config.json` so a run can never silently change its model, prompt, or data.
 
-Inspect a run with `--list-runs` and `--export`, or open the dashboard (`autorlhf`) and
-browse its phases, metrics, samples, and full event history. In the live run screen, enable
-Verbose (or press v) streams per-prompt evaluation progress, prompts, generated responses, and judgements. It also logs full OpenRouter chat and Jev request/response payloads, cache hits, and call latency in Activity; authentication credentials are not included. These verbose events are retained in the run history.
+Inspect a run with `--list-runs` and `--export`, or open the dashboard (`autorlhf`) and browse its phases, metrics, and samples. In the live run screen, enable Verbose (or press v) to stream per-prompt evaluation progress, prompts, generated responses, judgements, and API request details into Activity. These are live events, not a persisted full event-history artifact; credentials are excluded.
 
 Use **Abandon** (or press x) on an incomplete run in the dashboard to permanently delete its database record and run artifacts. A confirmation prompt prevents accidental deletion.
 
@@ -131,12 +129,14 @@ marked **inconclusive** rather than reported as a win.
 | Method    | Requirement                                                  | Notes                                    |
 | --------- | ------------------------------------------------------------ | ---------------------------------------- |
 | **LoRA**  | CPU-capable (tiny preset, no VRAM floor) up to >= 24 GiB GPU | Default; adapter is a few MB.            |
-| **QLoRA** | CUDA GPU with `bitsandbytes`, >= 6 GiB VRAM                  | 4-bit NF4 base; CUDA-only at runtime.    |
+| **QLoRA** | CUDA/ROCm GPU with `bitsandbytes`, >= 6 GiB VRAM            | 4-bit NF4 base; accelerator-only at runtime. |
 | **FFT**   | >= 48 GiB VRAM (large GPU / multi-GPU)                       | **Experimental**; rewrites every weight. |
 
-Presets that require an accelerator are gated on a detected CUDA/ROCm/MPS/XLA device and
-on the estimated VRAM fitting the measured total. On a CPU-only machine only the tiny
-LoRA preset is offered.
+Accelerator presets use CUDA/ROCm-reported VRAM. On partitioned GPUs such as MIG, this is the
+memory exposed to the process, not the physical card's advertised capacity. Feasibility checks
+compare estimated need with reported total VRAM; concurrent processes can still consume memory
+and cause an out-of-memory failure. QLoRA is offered only when a compatible CUDA/ROCm device is
+detected and `bitsandbytes` imports successfully. On CPU-only machines, only tiny LoRA is offered.
 
 ## Honesty about the feedback signal
 
