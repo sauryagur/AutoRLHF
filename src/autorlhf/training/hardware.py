@@ -21,7 +21,6 @@ from typing import Any
 
 from autorlhf.config.presets import estimate_training_memory
 from autorlhf.config.run_config import Hyperparameters
-from autorlhf.core.enums import TrainingMethod
 from autorlhf.core.types import HardwareInfo, ResourceEstimate
 
 #: Libraries whose versions are recorded in the manifest and shown in the TUI.
