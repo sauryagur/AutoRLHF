@@ -974,7 +974,6 @@ class RunStore:
             "transitions": self.transitions(run_id)[-20:],
         }
 
-
     # -- helpers ----------------------------------------------------------- #
 
     def _emit(self, kind: str, message: str, *, run_id: str, **data: Any) -> None:
