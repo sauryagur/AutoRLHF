@@ -688,11 +688,10 @@ class PipelineRunner:
     # training plan
     # ------------------------------------------------------------------ #
 
-    def _sft_train_records(self) -> list[dict[str, Any]]:
+    def _sft_records(self) -> list[dict[str, Any]]:
+        """Every SFT record; ``TrainingJob`` splits train/validation itself."""
         return [
-            record
-            for record in read_jsonl(self.paths.sft_path)
-            if record.get("record_type") == "sft" and record.get("split") == SplitName.TRAIN.value
+            record for record in read_jsonl(self.paths.sft_path) if record.get("record_type") == "sft"
         ]
 
     def _pair_records(self, bundle: DatasetBundle) -> list[dict[str, Any]]:
@@ -756,7 +755,10 @@ class PipelineRunner:
 
         hardware = self._hardware or _detect_hardware()
         self._hardware = hardware
-        sft_train = self._sft_train_records()
+        sft_records = self._sft_records()
+        sft_train = [
+            record for record in sft_records if record.get("split") == SplitName.TRAIN.value
+        ]
         pair_records = self._pair_records(bundle)
         train_pairs = [
             record
@@ -867,7 +869,7 @@ class PipelineRunner:
             jev_ranking=ranking or None,
             resource_estimate=estimate,
             hardware=hardware,
-            sft_examples=sft_train,
+            sft_examples=sft_records,
             preference_pairs=train_pairs + validation_pairs,
             train_count=len(sft_train) + len(train_pairs),
             validation_count=len(validation_pairs),

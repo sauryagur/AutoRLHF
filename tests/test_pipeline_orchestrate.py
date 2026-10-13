@@ -427,6 +427,34 @@ def test_build_training_plan_falls_back_to_sft_without_pairs(
     assert plan.sft_examples[0]["example_id"] == "s0001"
 
 
+def test_build_training_plan_carries_sft_validation_records(
+    tmp_path, minimal_character, rubric, monkeypatch, fake_plan_type
+):
+    """TrainingJob splits the plan itself, so validation records must survive."""
+
+    monkeypatch.setattr(orchestrate_module, "_detect_hardware", lambda: CPU_HW)
+    monkeypatch.setattr(orchestrate_module, "_param_count", lambda cfg, token: None)
+    ctx = make_ctx(tmp_path, character=minimal_character, rubric=rubric)
+    _write_sft_example(ctx.paths)
+    rewrite_records(
+        ctx.paths.sft_path,
+        read_jsonl(ctx.paths.sft_path)
+        + [
+            sft_record(
+                run_id=RUN_ID,
+                example_id="s0002",
+                prompt_id="p0002",
+                split="validation",
+                messages=[{"role": "user", "content": "Say bye."}],
+                source="accepted",
+            )
+        ],
+    )
+
+    plan = PipelineRunner(ctx).build_training_plan(DatasetBundle(run_id=RUN_ID))
+    assert {record["split"] for record in plan.sft_examples} == {"train", "validation"}
+
+
 def test_build_training_plan_raises_when_there_is_no_data(
     tmp_path, minimal_character, rubric, monkeypatch, fake_plan_type
 ):
@@ -729,7 +757,7 @@ def test_plan_training_persists_and_announces_the_plan(prepared, fake_plan_type)
     ]
     assert plan.train_count == len(sft_train) + len(train_pairs)
     assert plan.validation_count == len(validation_pairs)
-    assert len(plan.sft_examples) == len(sft_train)
+    assert len(plan.sft_examples) == len(read_jsonl(prepared.paths.sft_path))
     assert len(plan.preference_pairs) == len(train_pairs) + len(validation_pairs)
 
 
