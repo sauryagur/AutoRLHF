@@ -87,10 +87,6 @@ class RunPaths:
         return self.root / "comparison.json"
 
     @property
-    def history_path(self) -> Path:
-        return self.root / "history.jsonl"
-
-    @property
     def manifest_path(self) -> Path:
         return self.root / "manifest.json"
 
@@ -607,9 +603,6 @@ def refresh_manifest(
 # export
 # --------------------------------------------------------------------------- #
 
-#: Never exported, whatever else is asked for.
-_EXPORT_DENY = {"config.env", ".env", ".env.local", "wandb", "cache"}
-
 
 def export_run(
     *,
@@ -644,7 +637,6 @@ def export_run(
         "baseline_eval.json",
         "final_eval.json",
         "comparison.json",
-        "history.jsonl",
         "judgments.jsonl",
         "splits.json",
         "reviews.jsonl",
@@ -667,17 +659,12 @@ def export_run(
         if path.is_file() and not _is_secret_like(path):
             _copy_file(path, destination / path.name)
 
-    # Belt and braces: nothing secret-like survives the copy.
-    for candidate in destination.rglob("*"):
-        if candidate.is_file() and _is_secret_like(candidate):
-            candidate.unlink()
-
     return destination
 
 
 def _is_secret_like(path: Path) -> bool:
     name = path.name
-    if name in _EXPORT_DENY:
+    if name in {"config.env", ".env", ".env.local", "wandb", "cache"}:
         return True
     if name.endswith((".env", ".key", ".pem")):
         return True
@@ -691,24 +678,12 @@ def _copy_file(source: Path, target: Path) -> None:
     shutil.copy2(source, target)
 
 
-def artifact_index(paths: RunPaths) -> dict[str, str]:
-    """``name -> relative path`` for everything currently present."""
-
-    if not paths.root.is_dir():
-        return {}
-    out: dict[str, str] = {}
-    for path in sorted(paths.root.iterdir()):
-        out[path.name] = str(path.relative_to(paths.root))
-    return out
-
-
 __all__ = [
     "CHECKPOINT_SENTINEL",
     "REQUIRED_ADAPTER_FILES",
     "REQUIRED_CHECKPOINT_FILES",
     "RunPaths",
     "append_jsonl",
-    "artifact_index",
     "build_manifest",
     "checkpoint_step",
     "count_jsonl",
