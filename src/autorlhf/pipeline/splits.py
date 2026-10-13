@@ -83,9 +83,6 @@ class SplitAssignment(BaseModel):
             return None
 
 
-def split_lists(assignment: SplitAssignment) -> dict[str, list[str]]:
-    return assignment.lists()
-
 
 def validate_split(assignment: SplitAssignment, prompts: Iterable[SyntheticPrompt]) -> list[str]:
     """Return every problem with ``assignment``; empty means it is a valid partition.
@@ -135,12 +132,6 @@ def validate_split(assignment: SplitAssignment, prompts: Iterable[SyntheticPromp
     if assignment.split_hash and assignment.split_hash != content_hash(assignment.assignments):
         problems.append("split_hash does not match the assignment it describes")
     return problems
-
-
-def assert_valid_split(assignment: SplitAssignment, prompts: Iterable[SyntheticPrompt]) -> None:
-    problems = validate_split(assignment, prompts)
-    if problems:
-        raise ValueError("invalid split assignment: " + "; ".join(problems))
 
 
 def _targets(
@@ -287,9 +278,7 @@ __all__ = [
     "SPLIT_VERSION",
     "SplitAssignment",
     "apply_splits",
-    "assert_valid_split",
     "load_or_plan",
     "plan_splits",
-    "split_lists",
     "validate_split",
 ]

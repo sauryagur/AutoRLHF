@@ -345,16 +345,9 @@ def estimate_resources(
     return estimate.model_copy(update={"assumptions": notes})
 
 
-def method_reason(hw: HardwareInfo, method: TrainingMethod | str) -> tuple[bool, str]:
-    """Convenience pass-through to :meth:`HardwareInfo.supports`."""
-
-    return hw.supports(TrainingMethod(method))
-
-
 __all__ = [
     "TRACKED_PACKAGES",
     "detect_hardware",
     "estimate_resources",
-    "method_reason",
     "system_memory_mib",
 ]

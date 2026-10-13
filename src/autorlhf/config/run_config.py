@@ -104,8 +104,6 @@ class GenerationConfig(BaseModel):
     max_concurrency: int = 4
     request_timeout_s: float = 120.0
     max_retries: int = 4
-    #: When True and a `--dataset` fixture is supplied, dataset prep is skipped.
-    reuse_existing_dataset: bool = False
     #: Keep the records the UI hides in non-verbose mode.
     persist_verbose: bool = True
 

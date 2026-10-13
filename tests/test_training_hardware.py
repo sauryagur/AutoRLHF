@@ -10,7 +10,7 @@ import textwrap
 from autorlhf.config.run_config import Hyperparameters
 from autorlhf.core.enums import TrainingMethod
 from autorlhf.core.types import HardwareInfo
-from autorlhf.training.hardware import detect_hardware, estimate_resources, method_reason
+from autorlhf.training.hardware import detect_hardware, estimate_resources
 
 
 def _cpu_hw(**overrides) -> HardwareInfo:
@@ -78,11 +78,6 @@ def test_qlora_refused_on_mps() -> None:
     ok, reason = hw.supports(TrainingMethod.QLORA)
     assert not ok
     assert "MPS" in reason
-
-
-def test_method_reason_matches_supports() -> None:
-    hw = _cuda_hw()
-    assert method_reason(hw, "lora") == hw.supports(TrainingMethod.LORA)
 
 
 def test_detect_hardware_on_this_machine() -> None:
