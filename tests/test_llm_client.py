@@ -309,6 +309,18 @@ def test_costs_accumulate_across_distinct_calls(store):
     assert client.usage_summary()["cost_usd"] == pytest.approx(0.00084)
 
 
+def test_cache_entries_counts_stored_rows_not_this_process_lookups(store):
+    cache = ResponseCache(store)
+    client = make_client(cache=cache)
+    for index in range(4):
+        cache.put("chat.completion", f"k{index}", {"text": "x"})
+
+    summary = client.usage_summary()
+
+    assert cache.hits == 0 and cache.misses == 0
+    assert summary["cache_entries"] == 4.0
+
+
 # --------------------------------------------------------------------------- #
 # decisions
 # --------------------------------------------------------------------------- #

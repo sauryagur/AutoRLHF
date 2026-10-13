@@ -451,7 +451,9 @@ class OpenRouterClient:
             summary = dict(self._usage)
         summary["total_tokens"] = summary["prompt_tokens"] + summary["completion_tokens"]
         if self.cache is not None:
-            summary["cache_entries"] = float(self.cache.hits + self.cache.misses)
+            summary["cache_entries"] = float(
+                sum(int(ns["entries"]) for ns in self.cache.stats()["namespaces"].values())
+            )
         return summary
 
     # -- caching ----------------------------------------------------------- #
