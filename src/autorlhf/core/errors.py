@@ -13,6 +13,8 @@ class AutorlhfError(Exception):
 
     #: Short, actionable next step shown next to the error in the TUI.
     hint: str = ""
+    #: Whether retrying the same operation could succeed.
+    retryable: bool = False
 
     def __init__(self, message: str, hint: str = "") -> None:
         super().__init__(message)
