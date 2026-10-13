@@ -143,16 +143,11 @@ def test_broken_listener_does_not_break_other_listeners(bus: EventBus) -> None:
     assert any("boom" in error for error in bus.errors())
 
 
-def test_sink_receives_every_event(bus: EventBus) -> None:
-    seen = []
-    bus.set_sink(seen.append)
+def test_history_records_every_event(bus: EventBus) -> None:
     bus.emit("status", "a")
     bus.emit("metric", "b", value=1.0)
-    assert [event.kind for event in seen] == ["status", "metric"]
 
-    bus.set_sink(None)
-    bus.emit("log", "c")
-    assert len(seen) == 2
+    assert [event.kind for event in bus.history()] == ["status", "metric"]
 
 
 def test_history_is_bounded_by_history_size() -> None:

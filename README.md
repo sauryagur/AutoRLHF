@@ -96,7 +96,7 @@ $AUTORLHF_HOME/                     (~/.local/share/autorlhf by default)
     config.json                     immutable RunConfig + fingerprint
     character.json  rubric.json
     dataset.jsonl  preferences.jsonl  sft.jsonl  eval_prompts.jsonl
-    judgments.jsonl  history.jsonl  reviews.jsonl  splits.json
+    judgments.jsonl  reviews.jsonl  splits.json
     baseline_eval.json  final_eval.json  comparison.json
     manifest.json                   self-describing run record (no secrets)
     adapter/  checkpoints/  logs/   trained weights + logs
@@ -113,7 +113,7 @@ Runs are resumable from their last complete checkpoint — resuming reloads the 
 `config.json` so a run can never silently change its model, prompt, or data.
 
 Inspect a run with `--list-runs` and `--export`, or open the dashboard (`autorlhf`) and
-browse its phases, metrics, samples, and full `history.jsonl`. In the live run screen, enable
+browse its phases, metrics, samples, and full event history. In the live run screen, enable
 Verbose (or press v) streams per-prompt evaluation progress, prompts, generated responses, and judgements. It also logs full OpenRouter chat and Jev request/response payloads, cache hits, and call latency in Activity; authentication credentials are not included. These verbose events are retained in the run history.
 
 Use **Abandon** (or press x) on an incomplete run in the dashboard to permanently delete its database record and run artifacts. A confirmation prompt prevents accidental deletion.

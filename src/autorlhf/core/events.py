@@ -35,7 +35,7 @@ class Event(BaseModel):
     """A single observable thing that happened.
 
     ``seq`` is monotonically increasing per bus, which lets the UI drop stale
-    events and lets ``history.jsonl`` be replayed in order.
+    events and lets the in-memory history be replayed in order.
     """
 
     kind: EventKind
@@ -79,8 +79,6 @@ class EventBus:
         self._history_size = history_size
         self._seq = 0
         self._errors: list[str] = []
-        #: Optional sink for persisting every event (history.jsonl).
-        self._sink: Callable[[Event], None] | None = None
 
     # -- subscription ------------------------------------------------------ #
 
@@ -96,11 +94,6 @@ class EventBus:
                     self._listeners.remove(listener)
 
         return _unsubscribe
-
-    def set_sink(self, sink: Callable[[Event], None] | None) -> None:
-        """Set a single sink that receives every event (used for persistence)."""
-
-        self._sink = sink
 
     # -- publishing -------------------------------------------------------- #
 
@@ -135,14 +128,6 @@ class EventBus:
             self._history.append(event)
             if len(self._history) > self._history_size:
                 del self._history[: len(self._history) - self._history_size]
-
-        sink = self._sink
-        if sink is not None:
-            try:
-                sink(event)
-            except Exception as exc:  # pragma: no cover - defensive
-                with self._lock:
-                    self._errors.append(f"sink failed: {exc}")
 
         for listener in listeners:
             try:

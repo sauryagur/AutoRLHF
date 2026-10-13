@@ -160,11 +160,6 @@ reports so the base and fine-tuned evaluations provably used the same prompts.
 `"kind": "choice"` and the `PairDecision` JSON under `"pair_decision"` instead of
 `"judgement"`.
 
-## `history.jsonl` — every `EventBus` event
-
-The `Event.to_jsonl()` payload verbatim, appended by the run's event sink. Verbose-only
-events are persisted even when the UI hides them.
-
 ## `baseline_eval.json` / `final_eval.json`
 
 `EvaluationReport.model_dump(mode="json")`.
