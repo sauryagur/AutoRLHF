@@ -17,7 +17,6 @@ from autorlhf.integrations.tracking import (
     TrainingTracker,
     weave_client,
     weave_log,
-    weave_trace,
 )
 
 __all__ = [
@@ -26,5 +25,4 @@ __all__ = [
     "TrainingTracker",
     "weave_client",
     "weave_log",
-    "weave_trace",
 ]

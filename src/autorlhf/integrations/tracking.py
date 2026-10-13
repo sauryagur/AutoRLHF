@@ -18,7 +18,6 @@ by the libraries themselves (via the process environment) and are handled by
 
 from __future__ import annotations
 
-import contextlib
 import os
 from typing import Any
 
@@ -215,15 +214,6 @@ class TrainingTracker:
         self._weave_client = client
         self._state.weave_enabled = True
 
-    def log(self, metrics: dict[str, float], *, step: int) -> None:
-        """Forward numeric metrics to W&B when it is active; a no-op otherwise."""
-
-        if self._wandb_run is None or self._wandb_module is None:
-            return
-        try:
-            self._wandb_module.log(dict(metrics), step=step)
-        except Exception as exc:
-            self._warn(f"W&B log failed at step {step}: {exc}")
 
     def finish(self, *, summary: dict | None = None) -> None:
         """Flush and close any active backends.  Never raises."""
@@ -283,31 +273,6 @@ def weave_client(env: Environment, *, config: RunConfig | None = None) -> Any | 
         return None
 
 
-@contextlib.contextmanager
-def weave_trace(env: Environment, *, config: RunConfig | None, name: str) -> Any:
-    """Context manager adding a named trace span when Weave is active.
-
-    Yields the attributes dict (or ``None`` when Weave is inert).  Calls are
-    instrumented *explicitly* at the call site by agent C; this never patches the
-    OpenRouter SDK automatically.
-    """
-
-    client = weave_client(env, config=config)
-    if client is None:
-        yield None
-        return
-    try:
-        import weave
-
-        cm = weave.attributes({"autorlhf.trace": name})
-    except Exception as exc:
-        logger.warning("Weave trace span '%s' unavailable: %s", name, exc)
-        yield None
-        return
-    with cm:
-        yield {"autorlhf.trace": name}
-
-
 def weave_log(name: str, payload: dict) -> None:
     """Attach ``payload`` to the current Weave call, if there is one.
 
@@ -340,5 +305,4 @@ __all__ = [
     "TrainingTracker",
     "weave_client",
     "weave_log",
-    "weave_trace",
 ]

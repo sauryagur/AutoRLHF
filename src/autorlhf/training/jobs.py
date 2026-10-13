@@ -381,6 +381,24 @@ class TrainingJob:
             return None
         return TrainingTracker(config=self.config, env=self.env, run_id=self.run_id, bus=self.bus)
 
+
+    def _finish_tracking(self, result: Any | None) -> None:
+        """Close the tracking run, whatever the outcome (``result`` may be ``None``)."""
+
+        tracker = self._tracker_instance
+        if tracker is None:
+            return
+        summary = None
+        if result is not None:
+            summary = {
+                "status": getattr(result, "status", "unknown"),
+                "steps_completed": getattr(result, "steps_completed", 0),
+            }
+        try:
+            tracker.finish(summary=summary)
+        except Exception as exc:  # pragma: no cover - the tracker is meant to never raise
+            self._warn(f"closing experiment tracking failed: {exc}")
+
     def _start_tracking(self) -> None:
         """Initialise tracking once, collecting every warning it reports."""
 
@@ -520,7 +538,7 @@ class TrainingJob:
 
         data = self._prepare_data()
         store = self._store_or_none()
-        self._start_tracking()
+        result: Any = None
 
         hardware = detect_hardware()
         for warning in hardware.warnings:
@@ -534,6 +552,7 @@ class TrainingJob:
                 f"{hp.method.value} cannot run on this machine: {reason}",
                 warnings=[f"detected device: {hardware.device_type or 'unknown'}"],
             )
+        self._start_tracking()
 
         try:
             if objective is TrainingObjective.SFT:
@@ -549,6 +568,9 @@ class TrainingJob:
             return self._failed(
                 hp, objective, f"{type(exc).__name__}: {exc}", warnings=list(self._warnings)
             )
+        finally:
+            # Close the W&B/Weave run whatever happened, or buffered traces never flush.
+            self._finish_tracking(result)
 
         self._result = result
         self._state = "finished"
