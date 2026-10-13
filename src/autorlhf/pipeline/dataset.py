@@ -402,11 +402,14 @@ def validate_dataset(records: list[dict[str, Any]]) -> list[str]:
     # Preferences must reference candidates of the same prompt.
     for record in records:
         if isinstance(record, dict) and record.get("record_type") == "preference":
-            chosen = candidates.get(str(record.get("chosen_id", "")))
-            if chosen is not None and chosen.get("prompt_id") != record.get("prompt_id"):
+            chosen_candidate = candidates.get(str(record.get("chosen_id", "")))
+            if (
+                chosen_candidate is not None
+                and chosen_candidate.get("prompt_id") != record.get("prompt_id")
+            ):
                 problems.append(
                     f"preference '{record.get('pair_id')}' spans prompts "
-                    f"'{record.get('prompt_id')}' and '{chosen.get('prompt_id')}'"
+                    f"'{record.get('prompt_id')}' and '{chosen_candidate.get('prompt_id')}'"
                 )
     return problems
 
