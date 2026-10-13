@@ -518,6 +518,30 @@ class PipelineRunner:
             )
         return items
 
+    @staticmethod
+    def _apply_decision_to_candidates(
+        candidates: list[CandidateResponse], decision: ReviewDecision
+    ) -> None:
+        """Mirror :meth:`ReviewQueue.apply_to_dataset` on the in-memory candidates."""
+
+        by_id = {c.candidate_id: c for c in candidates if c.prompt_id == decision.item_id}
+        for candidate_id, text in decision.edited_texts.items():
+            candidate = by_id.get(candidate_id)
+            if candidate is not None:
+                candidate.text = text
+                candidate.status = SampleStatus.EDITED
+        if decision.action == "reject_both":
+            for candidate in by_id.values():
+                if candidate.status is not SampleStatus.FAILED:
+                    candidate.status = SampleStatus.REJECTED
+        elif decision.chosen_id and decision.rejected_id:
+            chosen = by_id.get(decision.chosen_id)
+            rejected = by_id.get(decision.rejected_id)
+            if chosen is not None:
+                chosen.status = SampleStatus.ACCEPTED
+            if rejected is not None:
+                rejected.status = SampleStatus.REJECTED
+
     def run_review(self, bundle: DatasetBundle) -> DatasetBundle:
         """Curate the dataset: build preferences, optionally with a human in the loop."""
 
@@ -553,6 +577,10 @@ class PipelineRunner:
                         continue
                     decisions[item.prompt_id] = decision
                     self.ctx.review_queue.apply_to_dataset(self.paths, decision)
+                    # The queue's write-through only rewrites dataset.jsonl; the
+                    # in-memory candidates are what preferences.jsonl and sft.jsonl
+                    # are built from, so they must learn the same verdict.
+                    self._apply_decision_to_candidates(bundle.candidates, decision)
                 build = build_preferences(
                     prompts=prompts,
                     candidates=bundle.candidates,

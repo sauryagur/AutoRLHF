@@ -658,6 +658,50 @@ def test_run_review_interactive_applies_human_decisions(
     assert any("human review decisions" in warning for warning in bundle.warnings)
 
 
+def test_run_review_trains_on_the_humans_edited_text(
+    tmp_path, minimal_character, rubric, monkeypatch
+):
+    """A human edit must reach sft.jsonl and preferences.jsonl, not just the dataset."""
+
+    monkeypatch.setattr(orchestrate_module, "_detect_hardware", lambda: CPU_HW)
+    monkeypatch.setattr(orchestrate_module, "_param_count", lambda cfg, token: None)
+    monkeypatch.setattr(orchestrate_module, "generate_prompts", lambda **kw: fake_prompts(10))
+    monkeypatch.setattr(orchestrate_module, "CandidateGenerator", FakeGenerator)
+    ctx = make_ctx(tmp_path, character=minimal_character, rubric=rubric, interactive=True)
+    monkeypatch.setattr(PipelineContext, "jev", property(lambda self: StubJev()))
+    runner = PipelineRunner(ctx)
+    bundle = runner.prepare_dataset()
+
+    stop = threading.Event()
+    edited = ["HUMAN EDITED text"]
+
+    def _reviewer() -> None:
+        while not stop.is_set():
+            for item in ctx.review_queue.pending():
+                ctx.review_queue.decide(
+                    ReviewDecision(
+                        item_id=item.item_id,
+                        action="edit",
+                        edited_texts={item.candidates[0].candidate_id: edited[0]},
+                    )
+                )
+            time.sleep(0.02)
+
+    worker = threading.Thread(target=_reviewer, daemon=True)
+    worker.start()
+    try:
+        runner.run_review(bundle)
+    finally:
+        stop.set()
+        worker.join(timeout=5)
+
+    sft = [r for r in read_jsonl(ctx.paths.sft_path) if r["source"] == "human"]
+    assert edited[0] in {record["messages"][-1]["content"] for record in sft}
+
+    pairs = read_jsonl(ctx.paths.preferences_path)
+    assert all(record["chosen_text"] == edited[0] for record in pairs)
+
+
 def test_plan_training_persists_and_announces_the_plan(prepared, fake_plan_type):
     bundle = prepared.runner.run_review(prepared.bundle)
     plan = prepared.runner.plan_training(bundle)
